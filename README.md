@@ -1,3 +1,3 @@
 # Retro-Compose
 
-This application for reviewing Retrofit and Compose setup.
+This application is for reviewing Retrofit and Compose setup.
