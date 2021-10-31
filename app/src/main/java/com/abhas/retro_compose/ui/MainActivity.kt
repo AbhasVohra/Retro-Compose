@@ -9,21 +9,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.abhas.retro_compose.model.Memes
 import com.abhas.retro_compose.model.MemesResponse
 import com.abhas.retro_compose.repository.RetrofitBuilder
 import com.abhas.retro_compose.ui.theme.RetroComposeTheme
 import com.skydoves.landscapist.ShimmerParams
 import com.skydoves.landscapist.coil.CoilImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,12 +38,37 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         RetrofitBuilder.getInstance()
+        setContent {
+            RetroComposeTheme {
+                // A surface container using the 'background' color from the theme
+                Surface(color = MaterialTheme.colors.background) {
+                    Column(modifier = Modifier.fillMaxWidth(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Greeting(this@MainActivity::fetchMemes, this@MainActivity::fetchMemesWithCoroutines)
+                        MemesList(list = list)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun fetchMemesWithCoroutines() {
+        list.clear()
+        lifecycleScope.launch(Dispatchers.IO) {
+            val memesResponse = RetrofitBuilder.getMemesResponse()
+            if (memesResponse.isSuccessful) {
+                list.addAll(memesResponse.body()?.data!!.memes)
+            }
+        }
+    }
+
+    private fun fetchMemes() {
+        list.clear()
         val memes = RetrofitBuilder.getMemes()
         memes.enqueue(object : Callback<MemesResponse> {
             override fun onResponse(call: Call<MemesResponse>, response: Response<MemesResponse>) {
-                response.let {
-                    it.body().let {
-                        list.addAll(it!!.let {
+                response.let { response ->
+                    response.body().let { body ->
+                        list.addAll(body!!.let {
                             it?.data.memes
                         })
                     }
@@ -51,15 +81,6 @@ class MainActivity : ComponentActivity() {
             }
 
         })
-        setContent {
-            RetroComposeTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(color = MaterialTheme.colors.background) {
-//                    Greeting("Android")
-                    MemesList(list = list)
-                }
-            }
-        }
     }
 }
 
@@ -97,14 +118,27 @@ fun Meme(meme: Memes) {
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+fun Greeting(fetchMemes:() -> Unit, fetchMemesWithCoroutines:() -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth(0.8f)) {
+        Button(onClick = {
+            fetchMemes()
+                         }, modifier = Modifier.fillMaxWidth(1f)) {
+            Text("Load Memes w/o Coroutines")
+        }
+
+        Button(onClick = {
+            fetchMemesWithCoroutines()
+                         }, modifier = Modifier.fillMaxWidth(1f)) {
+            Text("Load Memes with Coroutines")
+        }
+    }
+
 }
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     RetroComposeTheme {
-        Greeting("Android")
+//        Greeting("Android")
     }
 }

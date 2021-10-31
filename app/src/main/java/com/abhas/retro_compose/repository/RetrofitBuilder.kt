@@ -3,6 +3,7 @@ package com.abhas.retro_compose.repository
 import com.abhas.retro_compose.model.MemesResponse
 import com.abhas.retro_compose.utils.AppConstants
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -24,7 +25,13 @@ class RetrofitBuilder {
         fun getMemes(): Call<MemesResponse> {
             val retrofit = getInstance()
             val dataService = retrofit.create(DataService::class.java)
-            return dataService.getMemes()
+            return dataService.
+            getMemes()
+        }
+        suspend fun  getMemesResponse(): Response<MemesResponse> {
+            val retrofit = getInstance()
+            val dataService = retrofit.create(DataService::class.java)
+            return dataService.getMemesResponse()
         }
     }
 }
